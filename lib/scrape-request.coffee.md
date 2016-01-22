@@ -14,7 +14,7 @@ The configuration for [request](https://github.com/request/request) looks like t
       headers: # Any request headers goes here
         'Accept-Charset': "UTF-8"
       encoding: null # returns a raw buffer instead of a string
-      timeout: 60*1000 # 1 minute should suffice for usual usecases
+      timeout: 3*1000 # 3 seconds should suffice for typical use cases
       followAllRedirects: true
 
 ## Port
@@ -47,8 +47,10 @@ The full list of helpers used above.
 ### `fetchRequest`
 Request the target URL, switch between different types and correct the encoding to UTF-8.
 Define more mime types if required.
+    
+    MAX_REQUESTS = 3
 
-    fetchRequest = (url) ->
+    fetchRequest = (url, attempts=0) ->
       result = request.getSync url, config
       switch getResponseType result.response
         when 'application/json'
@@ -57,10 +59,12 @@ Define more mime types if required.
         when 'image/jpeg', 'image/gif', 'image/png', 'image/tiff'
           result.body
         else 
+          attempts++
           body = correctEncoding result.body
-          if Text.hasAjaxFragment(body)
-            fetchRequest Link(url).ajaxify()
-          else body
+          if Text.hasAjaxFragment(body) and attempts <= MAX_REQUESTS
+            fetchRequest Link(url).ajaxify(), attempts
+          else
+            body
 
 ### `correctEncoding`
 Detect the encoding of the buffer and autocorrect it when not already UTF-8.

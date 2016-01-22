@@ -20,7 +20,9 @@ The API of this module includes a central `run()` method.
     extractFromText = (html) ->
       data = {}
       data.title = articleTitle html
-      data.title or= html.match(/<title>([^<]*)<\/title>/i)[0]
+      # This line was causing errors when parsing nimblenotes.com (not sure why, but we can't have 
+      # issues parsing our own site :P )
+      # data.title or= html.match(/<title>([^<]*)<\/title>/i)[0]
       data.title or= ""
       data.text = readability.process(html, {type: "text"}).text
       data.text = "" unless data.text?.length > 50
@@ -54,6 +56,7 @@ of nasty XPaths or unreadable RegExps.
       data.text = findText $
       data.url = findCanonical $
       data.title = findTitle $
+      data.siteName = findSiteName $
       return data
 
     findFeeds = ($) ->
@@ -112,7 +115,19 @@ of nasty XPaths or unreadable RegExps.
       if Link.test url then url else ""
 
     findTitle = ($) ->
-      $("title,h1,h2,h3,h4,h5,h6").first().text()
+      selector = """
+        meta[property='og:title'],
+        meta[name='title']
+      """
+      list = $(selector).map((i,e) -> $(this).attr("content")).get()
+      _.compact(list)[0]
+
+    findSiteName = ($) ->
+      selector = """
+        meta[property='og:site_name']
+      """
+      list = $(selector).map((i,e) -> $(this).attr("content")).get()
+      _.compact(list)[0]
 
 ## Merge the results
 
@@ -122,8 +137,9 @@ result object. Pick the best results if there is some overlap.
     mergeResults = (txt, dom) ->
       data = {}
       data.url = dom.url if dom.url
-      data.title = Text.clean(txt.title or dom.title)
-      data.text = Text.clean(txt.text or dom.text)
+      data.siteName = Text.clean dom.siteName if dom.siteName 
+      data.title = Text.clean dom.title or txt.title
+      data.text = Text.clean dom.text or txt.text
       data.lang = txt.lang
       data.description = Text.clean dom.description or txt.teaser? or txt.summary
       data.favicon = dom.favicon

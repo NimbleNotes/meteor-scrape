@@ -22,7 +22,6 @@ Npm.depends({
 Package.onUse(function(api) {
   api.versionsFrom('1.0');
   api.use([
-    'coffeescript',
     'underscore',
     'digilord:sugarjs@1.4.1',
     'url',
@@ -30,6 +29,9 @@ Package.onUse(function(api) {
     'nefiltari:yaki@0.1.5',
     'wizonesolutions:underscore-string@1.0.0'
   ],['server']);
+  api.use([
+    'coffeescript'
+  ],['client', 'server']);
   api.export(['Scrape'],['client','server']);
   // api.export(['ScrapeClient'],['client']);
   api.addFiles([
