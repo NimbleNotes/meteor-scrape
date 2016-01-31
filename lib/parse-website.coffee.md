@@ -141,7 +141,7 @@ result object. Pick the best results if there is some overlap.
       data.title = Text.clean dom.title or txt.title
       data.text = Text.clean dom.text or txt.text
       data.lang = txt.lang
-      data.description = Text.clean dom.description or txt.teaser? or txt.summary
+      data.description = Text.clean dom.description or txt.teaser or txt.summary
       data.favicon = dom.favicon
       data.references = dom.references
       data.image = dom.image
