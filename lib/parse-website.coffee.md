@@ -11,30 +11,7 @@ following NPM modules are used:
 The API of this module includes a central `run()` method.
 
     @ParseWebsite = share.ParseWebsite = (html) ->
-      txt = extractFromText html
-      dom = extractFromDOM html
-      mergeResults txt, dom
-
-## Extract the raw data from the plaintext and analyze it
-
-    extractFromText = (html) ->
-      data = {}
-      data.title = articleTitle html
-      # This line was causing errors when parsing nimblenotes.com (not sure why, but we can't have 
-      # issues parsing our own site :P )
-      # data.title or= html.match(/<title>([^<]*)<\/title>/i)[0]
-      data.title or= ""
-      data.text = readability.process(html, {type: "text"}).text
-      data.text = "" unless data.text?.length > 50
-      # NOTE: readability also finds the "next" page for paginated articles!
-      # --> ToDo: follow the NEXT-pages and join all to one article!
-      # data.teaser or new teaser(data).summarize() # currently buggy (modul intern)
-      data.teaser or= ""
-      data.summary = summarize(data.text).join("\n")
-      text = "#{data.title} #{data.text}"
-      lang = Text.detectLanguage text
-      data.tags = Yaki(text, language: lang).extract()
-      return data
+      cleanResults extractFromDOM(html)
 
 ## DOM Parsing
 
@@ -134,18 +111,17 @@ of nasty XPaths or unreadable RegExps.
 Join the results from the TextParser and DomParser into one uniform
 result object. Pick the best results if there is some overlap.
 
-    mergeResults = (txt, dom) ->
+    cleanResults = (dom) ->
       data = {}
       data.url = dom.url if dom.url
-      data.siteName = Text.clean dom.siteName if dom.siteName 
-      data.title = Text.clean dom.title or txt.title
-      data.text = Text.clean dom.text or txt.text
-      data.lang = txt.lang
-      data.description = Text.clean dom.description or txt.teaser or txt.summary
+      data.siteName = Text.clean dom.siteName
+      data.title = Text.clean dom.title
+      data.text = Text.clean dom.text
+      data.description = Text.clean dom.description
       data.favicon = dom.favicon
       data.references = dom.references
       data.image = dom.image
       data.feeds = dom.feeds
       data.lang = Text.detectLanguage "#{data.title} #{data.text}"
-      data.tags = _.union dom.tags, txt.tags
+      data.tags = dom.tags
       return data
