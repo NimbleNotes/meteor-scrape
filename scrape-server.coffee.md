@@ -47,6 +47,8 @@ For communication between client and server, the following Methods are required:
 Some cleanup of the data is needed before delivering the result. Especially
 the transformation from any type of link to a clean absolute url.
 
+    baseUrlRegEx = /^http(s)?:\/\/[a-z0-9-]+(\.[a-z0-9-]+)*?(:[0-9]+)?(\/)?$/i
+
     correctWebsite = (url, data) ->
       obj = _.clone data
       url = Link url
@@ -54,7 +56,11 @@ the transformation from any type of link to a clean absolute url.
         link = if f then url.join f else ""
         if Link.test(link) then link else ""
       obj.image = if obj.image then url.join obj.image else ""
-      obj.favicon = url.join obj.favicon
+      if obj.favicon
+        obj.favicon = url.join obj.favicon
+      else
+        # Make a last ditch effort to grab the favicon at <site_url>/favicon.ico
+        obj.favicon = url.join '/favicon.ico'
       obj.references = _.map obj.references, (r) -> url.join r
       obj.domain = url.domain
       obj.url = if obj.url then obj.url else url.create()
